@@ -1,5 +1,6 @@
 import sys
 import importlib
+import math
 import POIEntity
 
 
@@ -30,8 +31,8 @@ class POICurd:
         for result in data["results"]:
             poiEntity = POIEntity.POIEntity(result)
             results.append(poiEntity)
-
-        return results
+        data["results"] = results
+        return data
 
     def insertPoiData(self, datas):
         db = self.dataBase
@@ -43,10 +44,10 @@ class POICurd:
             # 已有值做更新操作，否则插入
             if res is None:
                 insertValues.append((data.uid, data.name, data.address, data.province, data.city, data.area,
-                                     data.street_id, data.tag, data.telephone, data.type, data.detail_url, data.lng, data.lat))
+                                     data.street_id, data.tag, data.type, data.detail_url, data.telephone, data.lng, data.lat))
             else:
                 updateValues.append((data.name, data.address, data.province, data.city, data.area,
-                                     data.street_id, data.tag, data.telephone, data.type, data.detail_url, data.lng, data.lat, data.uid))
+                                     data.street_id, data.tag, data.type, data.detail_url, data.telephone, data.lng, data.lat, data.uid))
 
         if len(updateValues) > 0:
             db.update(
@@ -59,13 +60,22 @@ class POICurd:
 
 if __name__ == "__main__":
     poiCurd = POICurd()
-
-    results = poiCurd.requestPoiData({
-        'query': 'ATM机',
+    pageSize = 20
+    queryParam = {
+        'query': '自然地物',
         'region': '北京',
         'output': 'json',
         'scope': 2,
-        'page_size': 20,
+        'page_num': 0,
+        'page_size': pageSize,
         'ak': poiCurd.urlConfig.urlDict['AK']
-    })
+    }
+
+    content = poiCurd.requestPoiData(queryParam)
+    results = content["results"]
+
+    for i in range(1, math.ceil(content["total"]/pageSize)):
+        queryParam["page_num"] = i
+        results.extend(poiCurd.requestPoiData(queryParam)["results"])
+
     poiCurd.insertPoiData(results)
