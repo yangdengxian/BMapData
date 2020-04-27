@@ -1,7 +1,6 @@
 import sys
 import importlib
 import math
-import POIEntity
 
 
 sys.path.append(sys.path[0] + '/../../')
@@ -11,6 +10,7 @@ class POICurd:
 
     def __init__(self):
         DataBase = importlib.import_module('util.DataBase').DataBase
+        POIEntity = importlib.import_module('src.poi.POIEntity').POIEntity
         Urllib3Request = importlib.import_module(
             'util.Urllib3Request').Urllib3Request
 
@@ -23,13 +23,15 @@ class POICurd:
 
         self.urllib3Request = Urllib3Request()
 
+        self.POIEntity = POIEntity
+
     def requestPoiData(self, param):
         results = []
         urllib3Request = self.urllib3Request
         urlConfig = self.urlConfig
         data = urllib3Request.urllib3Get(urlConfig.urlDict['POISearch'], param)
         for result in data["results"]:
-            poiEntity = POIEntity.POIEntity(result)
+            poiEntity = self.POIEntity(result)
             results.append(poiEntity)
         data["results"] = results
         return data
@@ -53,31 +55,9 @@ class POICurd:
 
         if len(updateValues) > 0:
             db.update(
-                """update bmapdata.poi set name=%s,address=%s,province=%s,city=%s,area=%s,street_id=%s,tag=%s,telephone=%s,type=%s,detail_url=%s,lng=%s,lat=%s where uid=%s""",
+                """update bmapdata.poi set name=%s,address=%s,province=%s,city=%s,area=%s,street_id=%s,tag=%s,type=%s,detail_url=%s,telephone=%s,lng=%s,lat=%s where uid=%s""",
                 updateValues)
         if len(insertValues) > 0:
             db.insert(
                 """insert into bmapdata.poi values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", insertValues)
 
-
-if __name__ == "__main__":
-    poiCurd = POICurd()
-    pageSize = 20
-    queryParam = {
-        'query': '美食',
-        'region': '北京',
-        'output': 'json',
-        'scope': 2,
-        'page_num': 0,
-        'page_size': pageSize,
-        'ak': poiCurd.urlConfig.urlDict['AK']
-    }
-
-    content = poiCurd.requestPoiData(queryParam)
-    results = content["results"]
-
-    for i in range(1, math.ceil(content["total"]/pageSize)):
-        queryParam["page_num"] = i
-        results.extend(poiCurd.requestPoiData(queryParam)["results"])
-
-    poiCurd.insertPoiData(results)
