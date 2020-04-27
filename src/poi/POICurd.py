@@ -40,8 +40,10 @@ class POICurd:
         updateValues = []
         for data in datas:
             res = db.query(
-                """select uid from "bmapdata".poi where uid=%s""", [data.uid])
+                """select uid from bmapdata.poi where uid=%s""", [data.uid])
             # 已有值做更新操作，否则插入
+            if data.uid is None:
+                continue
             if res is None:
                 insertValues.append((data.uid, data.name, data.address, data.province, data.city, data.area,
                                      data.street_id, data.tag, data.type, data.detail_url, data.telephone, data.lng, data.lat))
@@ -51,18 +53,18 @@ class POICurd:
 
         if len(updateValues) > 0:
             db.update(
-                """update "bmapdata".poi set name=%s,address=%s,province=%s,city=%s,area=%s,street_id=%s,tag=%s,telephone=%s,type=%s,detail_url=%s,lng=%s,lat=%s where uid=%s""",
+                """update bmapdata.poi set name=%s,address=%s,province=%s,city=%s,area=%s,street_id=%s,tag=%s,telephone=%s,type=%s,detail_url=%s,lng=%s,lat=%s where uid=%s""",
                 updateValues)
         if len(insertValues) > 0:
             db.insert(
-                """insert into "bmapdata".poi values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", insertValues)
+                """insert into bmapdata.poi values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", insertValues)
 
 
 if __name__ == "__main__":
     poiCurd = POICurd()
     pageSize = 20
     queryParam = {
-        'query': '自然地物',
+        'query': '美食',
         'region': '北京',
         'output': 'json',
         'scope': 2,
